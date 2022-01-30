@@ -23,6 +23,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 class UserCreateSerializer(serializers.ModelSerializer):
     locations = serializers.SlugRelatedField(
+        required=False,
         queryset=Location.objects.all(),
         many=True,
         slug_field="name"
