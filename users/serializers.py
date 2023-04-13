@@ -1,6 +1,12 @@
+from django.core.exceptions import ValidationError
 from rest_framework import serializers
 
 from users.models import User, Location
+
+
+def check_email(value):
+    if value.endswith('rambler.ru'):
+        raise ValidationError(f'value ends with rambler.ru')
 
 
 class LocationSerializer(serializers.ModelSerializer):
@@ -28,18 +34,21 @@ class UserCreateSerializer(serializers.ModelSerializer):
         many=True,
         slug_field="name"
     )
+    email = serializers.EmailField(
+        validators=[check_email]
+    )
 
     def is_valid(self, raise_exception=False):
-        self._locations = self.initial_data.pop("locations")
+        self._locations = self.initial_data.pop("locations", [])
         return super().is_valid(raise_exception=raise_exception)
 
     def create(self, validated_data):
         user = User.objects.create(**validated_data)
-
+        user.set_password(user.password)
         for locations in self._locations:
             obj, _ = Location.objects.get_or_create(name=locations)
             user.locations.add(obj)
-
+        user.save()
         return user
 
     class Meta:
@@ -55,7 +64,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     )
 
     def is_valid(self, raise_exception=False):
-        self._locations = self.initial_data.pop("locations")
+        self._locations = self.initial_data.pop("locations", [])
         return super().is_valid(raise_exception=raise_exception)
 
     def save(self):

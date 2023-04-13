@@ -1,5 +1,17 @@
-from django.db import models
+from datetime import date
 
+from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
+from django.db import models
+from dateutil.relativedelta import relativedelta
+
+
+def check_data_min(value: date):
+    if relativedelta(date.today(), value).years < 9:
+        raise ValidationError(
+            '%(value)s too small',
+            params={'value': value},
+        )
 
 class Location(models.Model):
     name = models.CharField(max_length=40)
@@ -14,25 +26,22 @@ class Location(models.Model):
         return self.name
 
 
-class User(models.Model):
-    ROLES = [
-        ("member", "Пользователь"),
-        ("moderator", "Модератор"),
-        ("admin", "Админ"),
-    ]
+class User(AbstractUser):
+    ADMIN = 'admin'
+    MODERATOR = 'moderator'
+    MEMBER = 'member'
+    ROLE = [(ADMIN, ADMIN), (MODERATOR, MODERATOR), (MEMBER, MEMBER)]
 
-    first_name = models.CharField(max_length=20)
-    last_name = models.CharField(max_length=30, null=True, blank=True)
-    username = models.CharField(max_length=20)
-    password = models.CharField(max_length=128)
-    role = models.CharField(max_length=9, choices=ROLES, default="member")
-    age = models.PositiveIntegerField()
+    age = models.PositiveIntegerField(null=True)
+    role = models.CharField(max_length=9, choices=ROLE, default=MEMBER)
     locations = models.ManyToManyField(Location)
+    birth_date = models.DateField(null=True, validators=[check_data_min])
+    email = models.EmailField(unique=True, null=True) # unique уникальный
 
     class Meta:
-        verbose_name = "Пользователь"
-        verbose_name_plural = "Пользователи"
-        ordering = ["username"]
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
+        ordering = ['username']
 
     def __str__(self):
         return self.username

@@ -1,9 +1,21 @@
 from django.contrib import admin
 
-from ads.models import Category, Ad
-from users.models import Location, User
+from ads.models import Ad, Category, Selection
 
-admin.site.register(Category)
-admin.site.register(Location)
-admin.site.register(User)
-admin.site.register(Ad)
+
+@admin.register(Ad)
+class AdAdmin(admin.ModelAdmin):
+    list_display = ('name', 'author', 'price', 'is_published')
+    search_fields = ('name', 'description')
+    list_filter = ('is_published',)
+
+
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(Selection)
+class SelectionAdmin(admin.ModelAdmin):
+    pass
+
+
